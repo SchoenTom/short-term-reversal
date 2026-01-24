@@ -283,14 +283,14 @@ def main():
     perf_post = calc_performance_metrics(post_1990)
 
     print(f"\nSummary Statistics:")
-    print(f"{'Period':<25} {'Return':>10} {'Vol':>10} {'Sharpe':>10} {'N':>8}")
-    print(f"{'-' * 80}")
+    print(f"{'Period':<25} {'Return':>10} {'Vol':>10} {'Sharpe':>10} {'Sortino':>10} {'Calmar':>10} {'N':>8}")
+    print(f"{'-' * 100}")
     print(
-        f"{'Full (1926-2024)':<25} {perf['ann_return']:>9.2%} {perf['ann_vol']:>9.2%} {perf['sharpe']:>10.3f} {perf['n']:>8}")
+        f"{'Full (1926-2024)':<25} {perf['ann_return']:>9.2%} {perf['ann_vol']:>9.2%} {perf['sharpe']:>10.3f} {perf['sortino']:>10.3f} {perf['calmar']:>10.3f} {perf['n']:>8}")
     print(
-        f"{'Pre-1990':<25} {perf_pre['ann_return']:>9.2%} {perf_pre['ann_vol']:>9.2%} {perf_pre['sharpe']:>10.3f} {perf_pre['n']:>8}")
+        f"{'Pre-1990':<25} {perf_pre['ann_return']:>9.2%} {perf_pre['ann_vol']:>9.2%} {perf_pre['sharpe']:>10.3f} {perf_pre['sortino']:>10.3f} {perf_pre['calmar']:>10.3f} {perf_pre['n']:>8}")
     print(
-        f"{'Post-1990':<25} {perf_post['ann_return']:>9.2%} {perf_post['ann_vol']:>9.2%} {perf_post['sharpe']:>10.3f} {perf_post['n']:>8}")
+        f"{'Post-1990':<25} {perf_post['ann_return']:>9.2%} {perf_post['ann_vol']:>9.2%} {perf_post['sharpe']:>10.3f} {perf_post['sortino']:>10.3f} {perf_post['calmar']:>10.3f} {perf_post['n']:>8}")
 
     # Factor models - Full sample
     print(f"\n{'Factor Model Regressions (Full Sample):'}")
@@ -710,11 +710,74 @@ def main():
     plt.savefig(f'{OUTPUT_DIR}/figure5_rolling_returns.png', dpi=300, bbox_inches='tight')
     plt.close()
 
+    # Figure 6: Sortino Ratio Comparison (Pre vs Post Publication)
+    fig6, ax6 = plt.subplots(figsize=(10, 6))
+    periods_labels = ['Full Sample\n(1926-2024)', 'Pre-1990', 'Post-1990']
+    sortino_values = [perf['sortino'], perf_pre['sortino'], perf_post['sortino']]
+    
+    x = np.arange(len(periods_labels))
+    width = 0.6
+    bars = ax6.bar(x, sortino_values, width, color=['#1f77b4', '#2ca02c', '#d62728'], edgecolor='black', linewidth=1.2)
+    
+    for bar, val in zip(bars, sortino_values):
+        ax6.annotate(f'{val:.2f}', xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                     xytext=(0, 5), textcoords='offset points', ha='center', va='bottom', fontsize=12, fontweight='bold')
+    
+    ax6.set_ylabel('Sortino Ratio', fontsize=12, fontweight='bold')
+    ax6.set_title('Sortino Ratio by Period: Pre vs Post Publication [Daily]', fontsize=14, fontweight='bold')
+    ax6.set_xticks(x)
+    ax6.set_xticklabels(periods_labels, fontsize=11)
+    ax6.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+    ax6.grid(alpha=0.3, linestyle='--', axis='y')
+    ax6.spines['top'].set_visible(False)
+    ax6.spines['right'].set_visible(False)
+    
+    # Add annotation for decline
+    decline_sortino = ((perf_post['sortino'] - perf_pre['sortino']) / perf_pre['sortino'] * 100) if perf_pre['sortino'] != 0 else 0
+    ax6.annotate(f'Post-publication decline:\n{decline_sortino:.0f}%', xy=(2.3, perf_post['sortino']),
+                 fontsize=10, style='italic', ha='left',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', edgecolor='gray', alpha=0.8))
+    
+    plt.tight_layout()
+    plt.savefig(f'{OUTPUT_DIR}/figure6_sortino_ratio.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # Figure 7: Calmar Ratio Comparison (Pre vs Post Publication)
+    fig7, ax7 = plt.subplots(figsize=(10, 6))
+    calmar_values = [perf['calmar'], perf_pre['calmar'], perf_post['calmar']]
+    
+    bars = ax7.bar(x, calmar_values, width, color=['#1f77b4', '#2ca02c', '#d62728'], edgecolor='black', linewidth=1.2)
+    
+    for bar, val in zip(bars, calmar_values):
+        ax7.annotate(f'{val:.2f}', xy=(bar.get_x() + bar.get_width() / 2, bar.get_height()),
+                     xytext=(0, 5), textcoords='offset points', ha='center', va='bottom', fontsize=12, fontweight='bold')
+    
+    ax7.set_ylabel('Calmar Ratio', fontsize=12, fontweight='bold')
+    ax7.set_title('Calmar Ratio by Period: Pre vs Post Publication [Daily]', fontsize=14, fontweight='bold')
+    ax7.set_xticks(x)
+    ax7.set_xticklabels(periods_labels, fontsize=11)
+    ax7.axhline(y=0, color='gray', linestyle='-', alpha=0.3)
+    ax7.grid(alpha=0.3, linestyle='--', axis='y')
+    ax7.spines['top'].set_visible(False)
+    ax7.spines['right'].set_visible(False)
+    
+    # Add annotation for decline
+    decline_calmar = ((perf_post['calmar'] - perf_pre['calmar']) / perf_pre['calmar'] * 100) if perf_pre['calmar'] != 0 else 0
+    ax7.annotate(f'Post-publication decline:\n{decline_calmar:.0f}%', xy=(2.3, perf_post['calmar']),
+                 fontsize=10, style='italic', ha='left',
+                 bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', edgecolor='gray', alpha=0.8))
+    
+    plt.tight_layout()
+    plt.savefig(f'{OUTPUT_DIR}/figure7_calmar_ratio.png', dpi=300, bbox_inches='tight')
+    plt.close()
+
     print(f"\n  ✓ figure1_str_wealth.png")
     print(f"  ✓ figure2_str_publication_effect.png")
     print(f"  ✓ figure3_str_vs_combined.png")
     print(f"  ✓ figure4_all_strategies.png")
     print(f"  ✓ figure5_rolling_returns.png")
+    print(f"  ✓ figure6_sortino_ratio.png")
+    print(f"  ✓ figure7_calmar_ratio.png")
 
     # =========================================================================
     # SUMMARY
@@ -742,6 +805,8 @@ def main():
     print("    - figure3_str_vs_combined.png")
     print("    - figure4_all_strategies.png")
     print("    - figure5_rolling_returns.png")
+    print("    - figure6_sortino_ratio.png")
+    print("    - figure7_calmar_ratio.png")
     print(f"\n{'=' * 80}\n")
 
 
