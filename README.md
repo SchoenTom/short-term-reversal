@@ -1,6 +1,7 @@
 # Short-term Reversal Strategy Analysis
 
 **Semester Project: Stock Markets in the Age of Big Data**  
+University Konstanz 
 Winter 2025/2026
 
 An empirical investigation of the short-term reversal anomaly (Jegadeesh 1990) examining whether buying past losers and selling past winners remains profitable in modern markets.
